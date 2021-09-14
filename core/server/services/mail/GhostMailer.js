@@ -8,6 +8,7 @@ const errors = require('@tryghost/errors');
 const i18n = require('../../../shared/i18n');
 const settingsCache = require('../../../shared/settings-cache');
 const urlUtils = require('../../../shared/url-utils');
+const logging = require('@tryghost/logging');
 
 function getDomain() {
     const domain = urlUtils.urlFor('home', true).match(new RegExp('^https?://([^/:?#]+)(?:[/:?#]|$)', 'i'));
@@ -67,7 +68,8 @@ function createMailError({message, err, ignoreDefaultMessage} = {message: ''}) {
 
 module.exports = class GhostMailer {
     constructor() {
-        const nodemailer = require('nodemailer');
+        const nodemailer = require('@tryghost/nodemailer');
+
         const transport = config.get('mail') && config.get('mail').transport || 'direct';
         // nodemailer mutates the options passed to createTransport
         const options = config.get('mail') && _.clone(config.get('mail').options) || {};
@@ -75,7 +77,7 @@ module.exports = class GhostMailer {
         this.state = {
             usingDirect: transport === 'direct'
         };
-        this.transport = nodemailer.createTransport(transport, options);
+        this.transport = nodemailer(transport, options);
     }
 
     /**
@@ -99,28 +101,20 @@ module.exports = class GhostMailer {
         }
 
         const messageToSend = createMessage(message);
-
         const response = await this.sendMail(messageToSend);
-
-        if (this.transport.transportType === 'DIRECT') {
-            return this.handleDirectTransportResponse(response);
-        }
-
         return response;
     }
 
-    sendMail(message) {
-        return new Promise((resolve, reject) => {
-            this.transport.sendMail(message, (err, response) => {
-                if (err) {
-                    reject(createMailError({
-                        message: i18n.t('errors.mail.reason', {reason: err.message || err}),
-                        err
-                    }));
-                }
-                resolve(response);
+    async sendMail(message) {
+        try {
+            const response = await this.transport.sendMail(message);
+            return response;
+        } catch (err) {
+            throw createMailError({
+                message: i18n.t('errors.mail.reason', {reason: err.message || err}),
+                err
             });
-        });
+        }
     }
 
     handleDirectTransportResponse(response) {

@@ -61,7 +61,7 @@ describe('Mail: Ghostmailer', function () {
         mailer = new mail.GhostMailer();
 
         mailer.should.have.property('transport');
-        mailer.transport.transportType.should.eql('SMTP');
+        mailer.transport.transporter.name.should.eql('SMTP');
         mailer.transport.sendMail.should.be.a.Function();
     });
 
@@ -71,7 +71,7 @@ describe('Mail: Ghostmailer', function () {
         mailer = new mail.GhostMailer();
 
         mailer.should.have.property('transport');
-        mailer.transport.transportType.should.eql('DIRECT');
+        mailer.transport.transporter.name.should.eql('SMTP (direct)');
     });
 
     it('sends valid message successfully ', function (done) {
@@ -79,7 +79,9 @@ describe('Mail: Ghostmailer', function () {
 
         mailer = new mail.GhostMailer();
 
-        mailer.transport.transportType.should.eql('STUB');
+        console.log(mailer);
+
+        mailer.transport.transporter.name.should.eql('STUB');
 
         mailer.send(mailDataNoServer).then(function (response) {
             should.exist(response.message);
