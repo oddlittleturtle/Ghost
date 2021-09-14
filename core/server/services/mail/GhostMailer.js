@@ -8,7 +8,6 @@ const errors = require('@tryghost/errors');
 const i18n = require('../../../shared/i18n');
 const settingsCache = require('../../../shared/settings-cache');
 const urlUtils = require('../../../shared/url-utils');
-const logging = require('@tryghost/logging');
 
 function getDomain() {
     const domain = urlUtils.urlFor('home', true).match(new RegExp('^https?://([^/:?#]+)(?:[/:?#]|$)', 'i'));
